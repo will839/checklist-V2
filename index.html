@@ -1,170 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Investment Checklist + Stock Price</title>
+<style>
+  body { font-family: Arial, sans-serif; margin:0; padding:0; background:#f5f5f5; color:#333; }
+  .container { max-width:900px; margin:auto; padding:20px; background:white; box-shadow:0 0 10px rgba(0,0,0,0.1); }
+  .header h1 { margin-bottom:5px; }
+  .header p { margin-bottom:20px; color:#555; }
+  .stock-input-section { margin-bottom:20px; }
+  .stock-input-section input { padding:8px; font-size:16px; width:200px; margin-right:10px; }
+  .btn { padding:8px 16px; font-size:16px; cursor:pointer; background:#007BFF; color:white; border:none; border-radius:4px; }
+  .btn:hover { background:#0056b3; }
+  .progress-bar-container { width:100%; background:#ddd; border-radius:5px; overflow:hidden; margin-bottom:10px; height:20px; }
+  .progress-bar { height:100%; background:#28a745; text-align:center; color:white; line-height:20px; font-size:12px; width:0%; }
+  .progress-text { margin-bottom:10px; }
+  .section-header { margin-top:20px; }
+  .section-title { font-weight:bold; font-size:18px; }
+  .section-subtitle { font-size:14px; color:#555; margin-bottom:10px; }
+  .checklist-item { padding:5px 0; }
+  .checklist-item.checked .item-title { text-decoration: line-through; color:#999; }
+  #stockResult { margin-top:20px; font-weight:bold; font-size:16px; color:#007BFF; }
+  .actions { margin-top:20px; }
+</style>
+</head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>📊 Master Investment Checklist</h1>
-      <h1>📊 Quality Investment Checklist</h1>
-      <p>Bill Ackman's Quality Framework + Mohnish Pabrai's Dhando Principles</p>
-    </div>
-
-    <!-- Stock Input Section -->
-    <div class="stock-input-section">
-      <label for="stockCode">Enter Stock Code:</label>
-      <input type="text" id="stockCode" placeholder="e.g., AAPL">
-      <button class="btn" onclick="fetchStockPrice()">📈 Get Price</button>
-    </div>
-
-    <!-- Checklist Section -->
-    <div class="progress-section">
-      <div class="progress-bar-container">
-        <div class="progress-bar" id="progressBar">0%</div>
-      </div>
-      <div class="progress-text" id="progressText">0 of 18 criteria met</div>
-    </div>
-    <div class="scrollable-content" id="checklistContainer"></div>
-
-    <div class="actions">
-      <button class="btn btn-reset" onclick="resetChecklist()">🔄 Reset All</button>
-      <button class="btn btn-print" onclick="window.print()">🖨️ Print Checklist</button>
-    </div>
-
-    <!-- Stock Result Display -->
-    <div id="stockResult" style="margin-top:20px; font-weight:bold;"></div>
-
-    <div class="footer">
-      <p>📧 Feedback? Email: <a href="mailto:will@willfaulkner.com">will@willfaulkner.com</a></p>
-    </div>
+<div class="container">
+  <div class="header">
+    <h1>📊 Master Investment Checklist</h1>
+    <h1>📊 Quality Investment Checklist</h1>
+    <p>Bill Ackman's Quality Framework + Mohnish Pabrai's Dhando Principles</p>
   </div>
 
-  <script>
-    const checklistSections = [
-      // ... (your existing checklistSections here) ...
-    ];
-    let checkedItems = {};
+  <!-- Stock Input Section -->
+  <div class="stock-input-section">
+    <label for="stockCode">Enter Stock Code:</label>
+    <input type="text" id="stockCode" placeholder="e.g., AAPL">
+    <button class="btn" onclick="fetchStockPrice()">📈 Get Price</button>
+  </div>
 
-    function initChecklist() {
-      loadProgress();
-      renderChecklist();
-      updateProgress();
-    }
+  <!-- Checklist Section -->
+  <div class="progress-section">
+    <div class="progress-bar-container">
+      <div class="progress-bar" id="progressBar">0%</div>
+    </div>
+    <div class="progress-text" id="progressText">0 of 18 criteria met</div>
+  </div>
+  <div class="scrollable-content" id="checklistContainer"></div>
 
-    function renderChecklist() {
-      const container = document.getElementById('checklistContainer');
-      container.innerHTML = '';
-      let globalIndex = 0;
+  <div class="actions">
+    <button class="btn" onclick="resetChecklist()">🔄 Reset All</button>
+    <button class="btn" onclick="window.print()">🖨️ Print Checklist</button>
+  </div>
 
-      checklistSections.forEach((section) => {
-        const sectionHeader = document.createElement('div');
-        sectionHeader.className = 'section-header';
-        sectionHeader.innerHTML = `
-          <div class="section-title">${section.title}</div>
-          <div class="section-subtitle">${section.subtitle}</div>
-        `;
-        container.appendChild(sectionHeader);
+  <!-- Stock Result Display -->
+  <div id="stockResult"></div>
 
-        const checklist = document.createElement('div');
-        checklist.className = 'checklist';
+  <div class="footer" style="margin-top:20px;">
+    <p>📧 Feedback? Email: <a href="mailto:will@willfaulkner.com">will@willfaulkner.com</a></p>
+  </div>
+</div>
 
-        section.items.forEach((item) => {
-          const isChecked = checkedItems[globalIndex] || false;
-          const itemDiv = document.createElement('div');
-          itemDiv.className = `checklist-item ${isChecked ? 'checked' : ''}`;
-          itemDiv.innerHTML = `
-            <label style="display:flex; align-items:flex-start; gap:8px; cursor:pointer;">
-              <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleItem(${globalIndex})">
-              <div>
-                <div class="item-title">${item.title}</div>
-                <div class="item-description">${item.description}</div>
-              </div>
-            </label>
-          `;
-          checklist.appendChild(itemDiv);
-          globalIndex++;
-        });
+<script>
+// --- Checklist Data ---
+const checklistSections = [
+  {
+    title: "📈 Bill Ackman's Quality Investment Framework",
+    subtitle: "Principles for evaluating exceptional businesses",
+    items: [
+      { title: "The business is not a startup. The business must have a record of success.", description: "You don't need to make 100% per year to make a fortune. You just need around 15% PA over time." },
+      { title: "Is the business a publicly listed company?", description: "The business is liquid so can be sold easily." },
+      { title: "I understand how the company makes money.", description: "How the business makes money should be easy to understand. Like Coke, Apple etc." },
+      { title: "The company could last forever.", description: "The stock market could close tomorrow for 10 years and your investment would be fine." },
+      { title: "The business has a strong balance sheet.", description: "Low debt relative to earnings. The company has little to no debt. And it doesn't require external capital to survive." },
+      { title: "The company has scope to grow over time.", description: "Has market scope to grow and expand." },
+      { title: "The business has a high barrier of entry.", description: "The business can not be copied or replicated by others easily." },
+      { title: "The business is immune to extrinsic factors.", description: "The business will not be affected by fluctuations in the global economy." },
+      { title: "The business does not require a lot of reinvested capital to survive.", description: "The business should be healthy enough to generate revenue that is seen as cash on hand or distributed as dividends to shareholders." },
+      { title: "The business does not have a controlling shareholder.", description: "The business should not be majority controlled by a single shareholder." },
+      { title: "The demand for the product will last.", description: "Is it a product that people need? Is the product unique? Is it a brand that customers are willing to pay for." }
+    ]
+  },
+  {
+    title: "🎯 Mohnish Pabrai's Dhando Investment Principles",
+    subtitle: "Additional criteria for 'Heads I win, tails I don't lose much' investing",
+    items: [
+      { title: "The business has an ultra-slow rate of industry change.", description: "Invest in simple businesses operating in industries with very slow rates of change." },
+      { title: "It is a distressed business opportunity.", description: "Look for quality businesses in distressed situations." },
+      { title: "Protected by low-cost structure.", description: "The business cannot be decimated by low-cost foreign competition." },
+      { title: "Limited Union or labor risk.", description: "Business is not heavily unionized or vulnerable to being harmed by union actions." },
+      { title: "Margin of safety in valuation.", description: "Trading at a significant discount (30%+) to intrinsic value." },
+      { title: "Low Risk, High Uncertainty.", description: "Look for situations where uncertainty is high, leading to depressed prices." }
+    ]
+  },
+  {
+    title: "⚖️ Portfolio Risk Management",
+    subtitle: "Position sizing and diversification discipline",
+    items: [
+      { title: "Position Size Within Risk Limits.", description: "This investment will not exceed 5% of your total portfolio at cost." }
+    ]
+  }
+];
 
-        container.appendChild(checklist);
-      });
-    }
+let checkedItems = {};
 
-    function getTotalItems() {
-      return checklistSections.reduce((total, section) => total + section.items.length, 0);
-    }
+function initChecklist() {
+  loadProgress();
+  renderChecklist();
+  updateProgress();
+}
 
-    function toggleItem(index) {
-      checkedItems[index] = !checkedItems[index];
-      saveProgress();
-      renderChecklist();
-      updateProgress();
-    }
+function renderChecklist() {
+  const container = document.getElementById('checklistContainer');
+  container.innerHTML = '';
+  let globalIndex = 0;
 
-    function updateProgress() {
-      const total = getTotalItems();
-      const checkedCount = Object.values(checkedItems).filter(Boolean).length;
-      const percentage = Math.round((checkedCount / total) * 100);
-      const progressBar = document.getElementById('progressBar');
-      const progressText = document.getElementById('progressText');
-      progressBar.style.width = percentage + '%';
-      progressBar.textContent = percentage + '%';
-      progressText.textContent = `${checkedCount} of ${total} criteria met`;
-    }
+  checklistSections.forEach(section => {
+    const sectionHeader = document.createElement('div');
+    sectionHeader.className = 'section-header';
+    sectionHeader.innerHTML = `<div class="section-title">${section.title}</div><div class="section-subtitle">${section.subtitle}</div>`;
+    container.appendChild(sectionHeader);
 
-    function saveProgress() {
-      localStorage.setItem('masterInvestmentChecklist', JSON.stringify(checkedItems));
-    }
+    const checklist = document.createElement('div');
+    checklist.className = 'checklist';
 
-    function loadProgress() {
-      const saved = localStorage.getItem('masterInvestmentChecklist');
-      if (saved) {
-        checkedItems = JSON.parse(saved);
-      }
-    }
+    section.items.forEach(item => {
+      const isChecked = checkedItems[globalIndex] || false;
+      const itemDiv = document.createElement('div');
+      itemDiv.className = `checklist-item ${isChecked ? 'checked' : ''}`;
+      itemDiv.innerHTML = `
+        <label style="display:flex; align-items:flex-start; gap:8px; cursor:pointer;">
+          <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleItem(${globalIndex})">
+          <div>
+            <div class="item-title">${item.title}</div>
+            <div class="item-description">${item.description}</div>
+          </div>
+        </label>
+      `;
+      checklist.appendChild(itemDiv);
+      globalIndex++;
+    });
+    container.appendChild(checklist);
+  });
+}
 
-    function resetChecklist() {
-      if (confirm('Are you sure you want to reset all checkboxes?')) {
-        checkedItems = {};
-        saveProgress();
-        renderChecklist();
-        updateProgress();
-      }
-    }
+function getTotalItems() { return checklistSections.reduce((total, section) => total + section.items.length, 0); }
+function toggleItem(index) { checkedItems[index] = !checkedItems[index]; saveProgress(); renderChecklist(); updateProgress(); }
+function updateProgress() { 
+  const total = getTotalItems();
+  const checkedCount = Object.values(checkedItems).filter(Boolean).length;
+  const percentage = Math.round((checkedCount / total) * 100);
+  document.getElementById('progressBar').style.width = percentage+'%';
+  document.getElementById('progressBar').textContent = percentage+'%';
+  document.getElementById('progressText').textContent = `${checkedCount} of ${total} criteria met`;
+}
+function saveProgress() { localStorage.setItem('masterInvestmentChecklist', JSON.stringify(checkedItems)); }
+function loadProgress() { const saved = localStorage.getItem('masterInvestmentChecklist'); if(saved) checkedItems = JSON.parse(saved); }
+function resetChecklist() { if(confirm('Are you sure you want to reset all checkboxes?')) { checkedItems={}; saveProgress(); renderChecklist(); updateProgress(); } }
 
-    // --- New: Fetch Stock Price from Alpha Vantage ---
-    async function fetchStockPrice() {
-      const symbol = document.getElementById('stockCode').value.trim().toUpperCase();
-      const resultDiv = document.getElementById('stockResult');
+// --- Stock Price Function ---
+async function fetchStockPrice() {
+  const symbol = document.getElementById('stockCode').value.trim().toUpperCase();
+  const resultDiv = document.getElementById('stockResult');
+  if(!symbol) { resultDiv.textContent='Please enter a valid stock code.'; return; }
 
-      if (!symbol) {
-        resultDiv.textContent = 'Please enter a valid stock code.';
-        return;
-      }
+  const apiKey = 'YOUR_ALPHA_VANTAGE_API_KEY'; // <-- Replace with your API key
+  const url = `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${apiKey}`;
 
-      // **IMPORTANT**: Replace this with your own API key from Alpha Vantage
-      const apiKey = 'YOUR_ALPHA_VANTAGE_API_KEY';
+  try {
+    const response = await fetch(url);
+    if(!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json();
+    const quote = data["Global Quote"];
+    if(quote && quote["05. price"]) {
+      const price = parseFloat(quote["05. price"]).toFixed(2);
+      resultDiv.textContent = `Current price for ${symbol}: $${price}`;
+    } else { resultDiv.textContent=`No quote found for "${symbol}".`; }
+  } catch(err) {
+    console.error(err);
+    resultDiv.textContent='Error fetching stock price. Check console.';
+  }
+}
 
-      const url = `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${apiKey}`;
-
-      try {
-        const response = await fetch(url);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-
-        // The "Global Quote" endpoint returns object like { "Global Quote": { "05. price": "..." } }
-        const quote = data["Global Quote"];
-        if (quote && quote["05. price"]) {
-          const price = parseFloat(quote["05. price"]).toFixed(2);
-          resultDiv.textContent = `Current price for **${symbol}**: $${price}`;
-        } else {
-          resultDiv.textContent = `No quote found for symbol "${symbol}".`;
-        }
-
-      } catch (err) {
-        console.error('Error fetching stock price:', err);
-        resultDiv.textContent = 'Error fetching stock price. See console for details.';
-      }
-    }
-
-    // Initialize checklist on page load
-    initChecklist();
-  </script>
+initChecklist();
+</script>
 </body>
+</html>
