@@ -1,136 +1,170 @@
 <body>
-<div class="container">
-  <div class="header">
-    <h1>📊 Master Investment Checklist</h1>
-    <h1>📊 Quality Investment Checklist</h1>
-    <p>Bill Ackman's Quality Framework + Mohnish Pabrai's Dhando Principles</p>
-  </div>
-
-  <!-- Stock Input Section -->
-  <div class="stock-input-section">
-    <label for="stockCode">Enter Stock Code:</label>
-    <input type="text" id="stockCode" placeholder="e.g., AAPL">
-    <button class="btn" onclick="showStockResult()">✅ Check Stock</button>
-  </div>
-
-  <!-- Checklist Section -->
-  <div class="progress-section">
-    <div class="progress-bar-container">
-      <div class="progress-bar" id="progressBar">0%</div>
+  <div class="container">
+    <div class="header">
+      <h1>📊 Master Investment Checklist</h1>
+      <h1>📊 Quality Investment Checklist</h1>
+      <p>Bill Ackman's Quality Framework + Mohnish Pabrai's Dhando Principles</p>
     </div>
-    <div class="progress-text" id="progressText">0 of 18 criteria met</div>
+
+    <!-- Stock Input Section -->
+    <div class="stock-input-section">
+      <label for="stockCode">Enter Stock Code:</label>
+      <input type="text" id="stockCode" placeholder="e.g., AAPL">
+      <button class="btn" onclick="fetchStockPrice()">📈 Get Price</button>
+    </div>
+
+    <!-- Checklist Section -->
+    <div class="progress-section">
+      <div class="progress-bar-container">
+        <div class="progress-bar" id="progressBar">0%</div>
+      </div>
+      <div class="progress-text" id="progressText">0 of 18 criteria met</div>
+    </div>
+    <div class="scrollable-content" id="checklistContainer"></div>
+
+    <div class="actions">
+      <button class="btn btn-reset" onclick="resetChecklist()">🔄 Reset All</button>
+      <button class="btn btn-print" onclick="window.print()">🖨️ Print Checklist</button>
+    </div>
+
+    <!-- Stock Result Display -->
+    <div id="stockResult" style="margin-top:20px; font-weight:bold;"></div>
+
+    <div class="footer">
+      <p>📧 Feedback? Email: <a href="mailto:will@willfaulkner.com">will@willfaulkner.com</a></p>
+    </div>
   </div>
-  <div class="scrollable-content" id="checklistContainer"></div>
 
-  <div class="actions">
-    <button class="btn btn-reset" onclick="resetChecklist()">🔄 Reset All</button>
-    <button class="btn btn-print" onclick="window.print()">🖨️ Print Checklist</button>
-  </div>
+  <script>
+    const checklistSections = [
+      // ... (your existing checklistSections here) ...
+    ];
+    let checkedItems = {};
 
-  <!-- Stock Result Display -->
-  <div id="stockResult" style="margin-top:20px; font-weight:bold;"></div>
+    function initChecklist() {
+      loadProgress();
+      renderChecklist();
+      updateProgress();
+    }
 
-  <div class="footer">
-    <p>📧 Feedback? Email: <a href="mailto:will@willfaulkner.com">will@willfaulkner.com</a></p>
-  </div>
-</div>
+    function renderChecklist() {
+      const container = document.getElementById('checklistContainer');
+      container.innerHTML = '';
+      let globalIndex = 0;
 
-<script>
-// Checklist code remains mostly the same
-const checklistSections = [ /* your checklistSections here */ ];
+      checklistSections.forEach((section) => {
+        const sectionHeader = document.createElement('div');
+        sectionHeader.className = 'section-header';
+        sectionHeader.innerHTML = `
+          <div class="section-title">${section.title}</div>
+          <div class="section-subtitle">${section.subtitle}</div>
+        `;
+        container.appendChild(sectionHeader);
 
-let checkedItems = {};
+        const checklist = document.createElement('div');
+        checklist.className = 'checklist';
 
-function initChecklist() {
-  loadProgress();
-  renderChecklist();
-  updateProgress();
-}
+        section.items.forEach((item) => {
+          const isChecked = checkedItems[globalIndex] || false;
+          const itemDiv = document.createElement('div');
+          itemDiv.className = `checklist-item ${isChecked ? 'checked' : ''}`;
+          itemDiv.innerHTML = `
+            <label style="display:flex; align-items:flex-start; gap:8px; cursor:pointer;">
+              <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleItem(${globalIndex})">
+              <div>
+                <div class="item-title">${item.title}</div>
+                <div class="item-description">${item.description}</div>
+              </div>
+            </label>
+          `;
+          checklist.appendChild(itemDiv);
+          globalIndex++;
+        });
 
-function renderChecklist() {
-  const container = document.getElementById('checklistContainer');
-  container.innerHTML = '';
+        container.appendChild(checklist);
+      });
+    }
 
-  let globalIndex = 0;
+    function getTotalItems() {
+      return checklistSections.reduce((total, section) => total + section.items.length, 0);
+    }
 
-  checklistSections.forEach((section) => {
-    const sectionHeader = document.createElement('div');
-    sectionHeader.className = 'section-header';
-    sectionHeader.innerHTML = `
-      <div class="section-title">${section.title}</div>
-      <div class="section-subtitle">${section.subtitle}</div>
-    `;
-    container.appendChild(sectionHeader);
+    function toggleItem(index) {
+      checkedItems[index] = !checkedItems[index];
+      saveProgress();
+      renderChecklist();
+      updateProgress();
+    }
 
-    const checklist = document.createElement('div');
-    checklist.className = 'checklist';
+    function updateProgress() {
+      const total = getTotalItems();
+      const checkedCount = Object.values(checkedItems).filter(Boolean).length;
+      const percentage = Math.round((checkedCount / total) * 100);
+      const progressBar = document.getElementById('progressBar');
+      const progressText = document.getElementById('progressText');
+      progressBar.style.width = percentage + '%';
+      progressBar.textContent = percentage + '%';
+      progressText.textContent = `${checkedCount} of ${total} criteria met`;
+    }
 
-    section.items.forEach((item) => {
-      const isChecked = checkedItems[globalIndex] || false;
+    function saveProgress() {
+      localStorage.setItem('masterInvestmentChecklist', JSON.stringify(checkedItems));
+    }
 
-      const itemDiv = document.createElement('div');
-      itemDiv.className = `checklist-item ${isChecked ? 'checked' : ''}`;
-      itemDiv.innerHTML = `
-        <label style="display:flex; align-items:flex-start; gap:8px; cursor:pointer;">
-          <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleItem(${globalIndex})">
-          <div>
-            <div class="item-title">${item.title}</div>
-            <div class="item-description">${item.description}</div>
-          </div>
-        </label>
-      `;
-      checklist.appendChild(itemDiv);
-      globalIndex++;
-    });
+    function loadProgress() {
+      const saved = localStorage.getItem('masterInvestmentChecklist');
+      if (saved) {
+        checkedItems = JSON.parse(saved);
+      }
+    }
 
-    container.appendChild(checklist);
-  });
-}
+    function resetChecklist() {
+      if (confirm('Are you sure you want to reset all checkboxes?')) {
+        checkedItems = {};
+        saveProgress();
+        renderChecklist();
+        updateProgress();
+      }
+    }
 
-function getTotalItems() {
-  return checklistSections.reduce((total, section) => total + section.items.length, 0);
-}
+    // --- New: Fetch Stock Price from Alpha Vantage ---
+    async function fetchStockPrice() {
+      const symbol = document.getElementById('stockCode').value.trim().toUpperCase();
+      const resultDiv = document.getElementById('stockResult');
 
-function toggleItem(index) {
-  checkedItems[index] = !checkedItems[index];
-  saveProgress();
-  renderChecklist();
-  updateProgress();
-}
+      if (!symbol) {
+        resultDiv.textContent = 'Please enter a valid stock code.';
+        return;
+      }
 
-function updateProgress() {
-  const total = getTotalItems();
-  const checkedCount = Object.values(checkedItems).filter(Boolean).length;
-  const percentage = Math.round((checkedCount / total) * 100);
-  const progressBar = document.getElementById('progressBar');
-  const progressText = document.getElementById('progressText');
+      // **IMPORTANT**: Replace this with your own API key from Alpha Vantage
+      const apiKey = 'YOUR_ALPHA_VANTAGE_API_KEY';
 
-  progressBar.style.width = percentage + '%';
-  progressBar.textContent = percentage + '%';
-  progressText.textContent = `${checkedCount} of ${total} criteria met`;
-}
+      const url = `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${apiKey}`;
 
-function saveProgress() {
-  localStorage.setItem('masterInvestmentChecklist', JSON.stringify(checkedItems));
-}
+      try {
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
 
-function loadProgress() {
-  const saved = localStorage.getItem('masterInvestmentChecklist');
-  if (saved) {
-    checkedItems = JSON.parse(saved);
-  }
-}
+        // The "Global Quote" endpoint returns object like { "Global Quote": { "05. price": "..." } }
+        const quote = data["Global Quote"];
+        if (quote && quote["05. price"]) {
+          const price = parseFloat(quote["05. price"]).toFixed(2);
+          resultDiv.textContent = `Current price for **${symbol}**: $${price}`;
+        } else {
+          resultDiv.textContent = `No quote found for symbol "${symbol}".`;
+        }
 
-function resetChecklist() {
-  if (confirm('Are you sure you want to reset all checkboxes?')) {
-    checkedItems = {};
-    saveProgress();
-    renderChecklist();
-    updateProgress();
-  }
-}
+      } catch (err) {
+        console.error('Error fetching stock price:', err);
+        resultDiv.textContent = 'Error fetching stock price. See console for details.';
+      }
+    }
 
-// New function to show stock result
-function showStockResult() {
-  const stockCode = document.getElementById('stockCode').value.trim().toUpperCase();
-  const resultDiv = document.ge
+    // Initialize checklist on page load
+    initChecklist();
+  </script>
+</body>
